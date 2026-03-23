@@ -7,5 +7,14 @@ export interface None {
     __kind__: "None";
 }
 export type Option<T> = Some<T> | None;
+export interface Submission {
+    id: bigint;
+    name: string;
+    whatsapp: string;
+    timestamp: bigint;
+    screenshotUrl: Option<string>;
+}
 export interface backendInterface {
+    getSubmissions(password: string): Promise<Array<Submission>>;
+    submitTradeReview(name: string, whatsapp: string, screenshotUrl: Option<string>): Promise<void>;
 }

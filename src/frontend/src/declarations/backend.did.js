@@ -19,6 +19,12 @@ export const _CaffeineStorageRefillResult = IDL.Record({
   'success' : IDL.Opt(IDL.Bool),
   'topped_up_amount' : IDL.Opt(IDL.Nat),
 });
+export const Submission = IDL.Record({
+  'id' : IDL.Nat,
+  'name' : IDL.Text,
+  'whatsapp' : IDL.Text,
+  'timestamp' : IDL.Int,
+});
 
 export const idlService = IDL.Service({
   '_caffeineStorageBlobIsLive' : IDL.Func(
@@ -47,6 +53,8 @@ export const idlService = IDL.Service({
       [],
     ),
   '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
+  'getSubmissions' : IDL.Func([IDL.Text], [IDL.Vec(Submission)], ['query']),
+  'submitTradeReview' : IDL.Func([IDL.Text, IDL.Text], [], []),
 });
 
 export const idlInitArgs = [];
@@ -62,6 +70,12 @@ export const idlFactory = ({ IDL }) => {
   const _CaffeineStorageRefillResult = IDL.Record({
     'success' : IDL.Opt(IDL.Bool),
     'topped_up_amount' : IDL.Opt(IDL.Nat),
+  });
+  const Submission = IDL.Record({
+    'id' : IDL.Nat,
+    'name' : IDL.Text,
+    'whatsapp' : IDL.Text,
+    'timestamp' : IDL.Int,
   });
   
   return IDL.Service({
@@ -91,6 +105,8 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
+    'getSubmissions' : IDL.Func([IDL.Text], [IDL.Vec(Submission)], ['query']),
+    'submitTradeReview' : IDL.Func([IDL.Text, IDL.Text], [], []),
   });
 };
 

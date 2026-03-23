@@ -1,12 +1,26 @@
+import type { Submission } from "@/backend";
+import { ExternalBlob } from "@/backend";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { useActor } from "@/hooks/useActor";
+import {
   AlertCircle,
   BarChart2,
   CheckCircle2,
+  Eye,
+  EyeOff,
   Loader2,
+  Lock,
   Target,
   Upload,
   X,
@@ -17,6 +31,284 @@ import { useState } from "react";
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 type ModalState = "idle" | "submitting" | "success";
+type ScreenshotOption =
+  | { __kind__: "Some"; value: string }
+  | { __kind__: "None" };
+
+// Helper to get screenshotUrl from a submission at runtime (field may come
+// from an updated backend before types are regenerated)
+function getScreenshotUrl(sub: Submission): ScreenshotOption {
+  const s = sub as any;
+  if (s.screenshotUrl && s.screenshotUrl.__kind__ === "Some") {
+    return { __kind__: "Some", value: s.screenshotUrl.value as string };
+  }
+  return { __kind__: "None" };
+}
+
+// ─── Admin Page ───────────────────────────────────────────────────────────────
+
+const ADMIN_PASSWORD = "journexa-admin-2026";
+
+function AdminPage() {
+  const { actor } = useActor();
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [authState, setAuthState] = useState<
+    "idle" | "loading" | "error" | "success"
+  >("idle");
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (password !== ADMIN_PASSWORD) {
+      setAuthState("error");
+      return;
+    }
+    if (!actor) return;
+    setAuthState("loading");
+    try {
+      const results = await actor.getSubmissions(password);
+      setSubmissions(results);
+      setAuthState("success");
+    } catch {
+      setAuthState("error");
+    }
+  };
+
+  const formatDate = (timestamp: bigint) => {
+    return new Date(Number(timestamp)).toLocaleString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  return (
+    <div className="min-h-screen bg-background flex flex-col">
+      <header className="border-b border-border bg-background/90 backdrop-blur-sm">
+        <div className="max-w-5xl mx-auto px-5 h-16 flex items-center gap-3">
+          <img
+            src="/assets/uploads/IMG_20260323_052315-1.jpg"
+            alt="Journexa"
+            className="h-10 w-auto object-contain"
+          />
+          <span className="text-muted-foreground text-sm font-medium border-l border-border pl-3 ml-1">
+            Admin Panel
+          </span>
+        </div>
+      </header>
+
+      <main className="flex-1 flex items-center justify-center px-5 py-16">
+        <AnimatePresence mode="wait">
+          {authState !== "success" ? (
+            <motion.div
+              key="login"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+              className="w-full max-w-sm"
+            >
+              <div className="rounded-2xl border border-border bg-card p-8 shadow-2xl">
+                <div className="flex flex-col items-center mb-8">
+                  <div className="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-4">
+                    <Lock className="w-6 h-6 text-primary" />
+                  </div>
+                  <h1 className="text-xl font-bold text-foreground">
+                    Admin Access
+                  </h1>
+                  <p className="text-muted-foreground text-sm mt-1">
+                    Enter password to view submissions
+                  </p>
+                </div>
+
+                <form onSubmit={handleLogin} className="space-y-4">
+                  <div className="space-y-1.5">
+                    <Label
+                      htmlFor="admin-password"
+                      className="text-sm text-foreground/90"
+                    >
+                      Password
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="admin-password"
+                        data-ocid="admin.input"
+                        type={showPassword ? "text" : "password"}
+                        value={password}
+                        onChange={(e) => {
+                          setPassword(e.target.value);
+                          if (authState === "error") setAuthState("idle");
+                        }}
+                        placeholder="Enter admin password"
+                        className="bg-muted border-border text-foreground placeholder:text-muted-foreground pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((v) => !v)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {showPassword ? (
+                          <EyeOff className="w-4 h-4" />
+                        ) : (
+                          <Eye className="w-4 h-4" />
+                        )}
+                      </button>
+                    </div>
+                    {authState === "error" && (
+                      <p
+                        className="text-destructive text-xs flex items-center gap-1"
+                        data-ocid="admin.error_state"
+                      >
+                        <AlertCircle className="w-3 h-3" />
+                        Incorrect password
+                      </p>
+                    )}
+                  </div>
+
+                  <Button
+                    type="submit"
+                    data-ocid="admin.submit_button"
+                    disabled={authState === "loading" || !password}
+                    className="w-full rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 font-semibold h-11"
+                  >
+                    {authState === "loading" ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />{" "}
+                        Loading...
+                      </>
+                    ) : (
+                      "Enter"
+                    )}
+                  </Button>
+                </form>
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="submissions"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+              className="w-full max-w-5xl"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-foreground">
+                    Submissions
+                  </h2>
+                  <p className="text-muted-foreground text-sm mt-0.5">
+                    {submissions.length}{" "}
+                    {submissions.length === 1 ? "entry" : "entries"} total
+                  </p>
+                </div>
+                <Button
+                  data-ocid="admin.secondary_button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setAuthState("idle");
+                    setPassword("");
+                    setSubmissions([]);
+                  }}
+                  className="rounded-xl border-border text-muted-foreground hover:border-primary hover:text-primary"
+                >
+                  Log out
+                </Button>
+              </div>
+
+              {submissions.length === 0 ? (
+                <div
+                  data-ocid="admin.empty_state"
+                  className="rounded-2xl border border-border bg-card p-16 text-center"
+                >
+                  <p className="text-muted-foreground">No submissions yet.</p>
+                </div>
+              ) : (
+                <div
+                  className="rounded-2xl border border-border bg-card overflow-hidden"
+                  data-ocid="admin.table"
+                >
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-border hover:bg-transparent">
+                        <TableHead className="text-muted-foreground font-semibold">
+                          #
+                        </TableHead>
+                        <TableHead className="text-muted-foreground font-semibold">
+                          Name
+                        </TableHead>
+                        <TableHead className="text-muted-foreground font-semibold">
+                          WhatsApp
+                        </TableHead>
+                        <TableHead className="text-muted-foreground font-semibold">
+                          Date
+                        </TableHead>
+                        <TableHead className="text-muted-foreground font-semibold">
+                          Screenshot
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {submissions.map((sub, i) => {
+                        const screenshot = getScreenshotUrl(sub);
+                        return (
+                          <TableRow
+                            key={String(sub.id)}
+                            data-ocid={`admin.row.${i + 1}`}
+                            className="border-border hover:bg-muted/30 transition-colors"
+                          >
+                            <TableCell className="text-muted-foreground text-sm">
+                              {i + 1}
+                            </TableCell>
+                            <TableCell className="text-foreground font-medium">
+                              {sub.name}
+                            </TableCell>
+                            <TableCell className="text-foreground/80 font-mono text-sm">
+                              {sub.whatsapp}
+                            </TableCell>
+                            <TableCell className="text-muted-foreground text-sm">
+                              {formatDate(sub.timestamp)}
+                            </TableCell>
+                            <TableCell>
+                              {screenshot.__kind__ === "Some" ? (
+                                <a
+                                  href={screenshot.value}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                >
+                                  <img
+                                    src={screenshot.value}
+                                    alt="Trade screenshot"
+                                    className="w-16 h-12 object-cover rounded cursor-pointer border border-border hover:border-primary/50 transition-colors"
+                                  />
+                                </a>
+                              ) : (
+                                <span className="text-muted-foreground">—</span>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </main>
+
+      <footer className="border-t border-border py-6 px-5">
+        <div className="max-w-5xl mx-auto text-center text-muted-foreground text-sm">
+          © {new Date().getFullYear()} Journexa Admin
+        </div>
+      </footer>
+    </div>
+  );
+}
 
 // ─── Nav ─────────────────────────────────────────────────────────────────────
 
@@ -49,7 +341,6 @@ function Hero({ onCTAClick }: { onCTAClick: () => void }) {
       className="relative min-h-screen flex items-center justify-center pt-16 overflow-hidden blob-bg"
       data-ocid="hero.section"
     >
-      {/* Background decorative elements */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-primary/5 blur-3xl" />
       </div>
@@ -182,7 +473,7 @@ function HowItWorks({ onCTAClick }: { onCTAClick: () => void }) {
             variant="outline"
             className="rounded-full border-border text-muted-foreground hover:border-primary hover:text-primary transition-colors"
           >
-            Try it now — it's free
+            Try it now — it&apos;s free
           </Button>
         </motion.div>
       </div>
@@ -214,7 +505,7 @@ function Problem() {
             transition={{ duration: 0.6 }}
           >
             <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-5 leading-tight">
-              Most traders don't lose because of strategy
+              Most traders don&apos;t lose because of strategy
             </h2>
             <p className="text-muted-foreground text-lg leading-relaxed mb-8">
               They lose because they repeat the same mistakes again and again.
@@ -256,22 +547,10 @@ function Problem() {
                   </span>
                 </div>
                 {[
-                  {
-                    label: "Entry timing",
-                    status: "Late — FOMO entry",
-                    bad: true,
-                  },
-                  {
-                    label: "Stop loss",
-                    status: "Too wide — 3% risk",
-                    bad: true,
-                  },
-                  { label: "Exit", status: "Panic sold early", bad: true },
-                  {
-                    label: "Emotion log",
-                    status: "Fear after red candle",
-                    bad: true,
-                  },
+                  { label: "Entry timing", status: "Late — FOMO entry" },
+                  { label: "Stop loss", status: "Too wide — 3% risk" },
+                  { label: "Exit", status: "Panic sold early" },
+                  { label: "Emotion log", status: "Fear after red candle" },
                 ].map((row) => (
                   <div
                     key={row.label}
@@ -369,7 +648,7 @@ function Trust({ onCTAClick }: { onCTAClick: () => void }) {
                 ))}
               </div>
               <p className="text-foreground/85 text-sm leading-relaxed mb-5">
-                "{t.quote}"
+                &ldquo;{t.quote}&rdquo;
               </p>
               <div className="flex items-center gap-3">
                 <Avatar className="w-9 h-9">
@@ -455,10 +734,12 @@ function FinalCTA({ onCTAClick }: { onCTAClick: () => void }) {
 // ─── Modal Form ───────────────────────────────────────────────────────────────
 
 function CTAModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { actor } = useActor();
   const [name, setName] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [modalState, setModalState] = useState<ModalState>("idle");
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [errors, setErrors] = useState<{ name?: string; whatsapp?: string }>(
     {},
   );
@@ -467,7 +748,7 @@ function CTAModal({ open, onClose }: { open: boolean; onClose: () => void }) {
     const errs: { name?: string; whatsapp?: string } = {};
     if (!name.trim()) errs.name = "Name is required";
     if (!whatsapp.trim()) errs.whatsapp = "WhatsApp number is required";
-    else if (!/^[\d\s\+\-\(\)]{7,20}$/.test(whatsapp.trim()))
+    else if (!/^[\d\s+\-()]{7,20}$/.test(whatsapp.trim()))
       errs.whatsapp = "Enter a valid phone number";
     return errs;
   };
@@ -479,11 +760,37 @@ function CTAModal({ open, onClose }: { open: boolean; onClose: () => void }) {
       setErrors(errs);
       return;
     }
+    if (!actor) return;
     setErrors({});
     setModalState("submitting");
-    // Simulate brief processing delay
-    await new Promise((r) => setTimeout(r, 1200));
-    setModalState("success");
+    setUploadProgress(0);
+
+    try {
+      let screenshotUrl: ScreenshotOption;
+
+      if (file) {
+        const bytes = new Uint8Array(await file.arrayBuffer());
+        const blob = ExternalBlob.fromBytes(bytes).withUploadProgress((pct) =>
+          setUploadProgress(pct),
+        );
+        await blob.getBytes();
+        const url = blob.getDirectURL();
+        screenshotUrl = { __kind__: "Some", value: url };
+      } else {
+        screenshotUrl = { __kind__: "None" };
+      }
+
+      // Cast to any to support updated backend API (screenshotUrl arg)
+      await (actor as any).submitTradeReview(
+        name.trim(),
+        whatsapp.trim(),
+        screenshotUrl,
+      );
+      setModalState("success");
+    } catch {
+      setModalState("idle");
+      setErrors({ name: "Something went wrong. Please try again." });
+    }
   };
 
   const handleClose = () => {
@@ -493,6 +800,7 @@ function CTAModal({ open, onClose }: { open: boolean; onClose: () => void }) {
       setWhatsapp("");
       setFile(null);
       setModalState("idle");
+      setUploadProgress(0);
       setErrors({});
     }, 300);
   };
@@ -504,7 +812,6 @@ function CTAModal({ open, onClose }: { open: boolean; onClose: () => void }) {
           className="fixed inset-0 z-[100] flex items-center justify-center p-4"
           data-ocid="cta.modal"
         >
-          {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -514,7 +821,6 @@ function CTAModal({ open, onClose }: { open: boolean; onClose: () => void }) {
             onClick={handleClose}
           />
 
-          {/* Modal */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 16 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -522,7 +828,6 @@ function CTAModal({ open, onClose }: { open: boolean; onClose: () => void }) {
             transition={{ duration: 0.25, ease: "easeOut" }}
             className="relative z-10 w-full max-w-md bg-card border border-border rounded-2xl shadow-2xl overflow-hidden"
           >
-            {/* Close button */}
             <button
               type="button"
               data-ocid="cta.close_button"
@@ -550,7 +855,8 @@ function CTAModal({ open, onClose }: { open: boolean; onClose: () => void }) {
                     We got it!
                   </h3>
                   <p className="text-muted-foreground text-sm leading-relaxed mb-6">
-                    We'll reach out on WhatsApp soon with your trade review.
+                    We&apos;ll reach out on WhatsApp soon with your trade
+                    review.
                   </p>
                   <Button
                     data-ocid="cta.confirm_button"
@@ -573,12 +879,11 @@ function CTAModal({ open, onClose }: { open: boolean; onClose: () => void }) {
                       Get your free trade review
                     </h3>
                     <p className="text-muted-foreground text-sm">
-                      We'll analyze your trade and reach out on WhatsApp.
+                      We&apos;ll analyze your trade and reach out on WhatsApp.
                     </p>
                   </div>
 
                   <form onSubmit={handleSubmit} className="p-6 space-y-5">
-                    {/* Name */}
                     <div className="space-y-1.5">
                       <Label
                         htmlFor="name"
@@ -604,7 +909,6 @@ function CTAModal({ open, onClose }: { open: boolean; onClose: () => void }) {
                       )}
                     </div>
 
-                    {/* WhatsApp */}
                     <div className="space-y-1.5">
                       <Label
                         htmlFor="whatsapp"
@@ -631,7 +935,6 @@ function CTAModal({ open, onClose }: { open: boolean; onClose: () => void }) {
                       )}
                     </div>
 
-                    {/* Screenshot upload */}
                     <div className="space-y-1.5">
                       <Label className="text-sm text-foreground/90">
                         Trade screenshot{" "}
@@ -660,6 +963,30 @@ function CTAModal({ open, onClose }: { open: boolean; onClose: () => void }) {
                       </p>
                     </div>
 
+                    {modalState === "submitting" &&
+                      file &&
+                      uploadProgress > 0 &&
+                      uploadProgress < 100 && (
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-muted-foreground">
+                              Uploading screenshot...
+                            </span>
+                            <span className="text-xs text-primary font-medium">
+                              {uploadProgress}%
+                            </span>
+                          </div>
+                          <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+                            <motion.div
+                              className="h-full bg-primary rounded-full"
+                              initial={{ width: 0 }}
+                              animate={{ width: `${uploadProgress}%` }}
+                              transition={{ duration: 0.3 }}
+                            />
+                          </div>
+                        </div>
+                      )}
+
                     <Button
                       type="submit"
                       data-ocid="cta.submit_button"
@@ -669,7 +996,9 @@ function CTAModal({ open, onClose }: { open: boolean; onClose: () => void }) {
                       {modalState === "submitting" ? (
                         <>
                           <Loader2 className="w-4 h-4 mr-2 animate-spin" />{" "}
-                          Submitting...
+                          {file && uploadProgress < 100
+                            ? `Uploading... ${uploadProgress}%`
+                            : "Submitting..."}
                         </>
                       ) : (
                         "Submit for Review"
@@ -714,9 +1043,9 @@ function Footer() {
   );
 }
 
-// ─── App ──────────────────────────────────────────────────────────────────────
+// ─── Landing Page ─────────────────────────────────────────────────────────────
 
-export default function App() {
+function LandingPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const openModal = () => setModalOpen(true);
   const closeModal = () => setModalOpen(false);
@@ -735,4 +1064,12 @@ export default function App() {
       <CTAModal open={modalOpen} onClose={closeModal} />
     </div>
   );
+}
+
+// ─── App ──────────────────────────────────────────────────────────────────────
+
+export default function App() {
+  const isAdmin =
+    typeof window !== "undefined" && window.location.pathname === "/admin";
+  return isAdmin ? <AdminPage /> : <LandingPage />;
 }
