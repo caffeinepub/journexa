@@ -29,7 +29,7 @@ actor {
   // Separate stable map for screenshot URLs — added without breaking existing data
   let screenshotUrls = Map.empty<Nat, Text>();
   var nextId = 0;
-  let adminPassword = "journexa-admin-2026";
+  let adminPassword = "admin123";
 
   public shared ({ caller }) func submitTradeReview(name : Text, whatsapp : Text, screenshotUrl : ?Text) : async () {
     let submission : Submission = {

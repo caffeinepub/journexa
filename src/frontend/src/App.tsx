@@ -47,7 +47,7 @@ function getScreenshotUrl(sub: Submission): ScreenshotOption {
 
 // ─── Admin Page ───────────────────────────────────────────────────────────────
 
-const ADMIN_PASSWORD = "journexa-admin-2026";
+const ADMIN_PASSWORD = "admin123";
 
 function AdminPage() {
   const { actor } = useActor();
@@ -76,7 +76,7 @@ function AdminPage() {
   };
 
   const formatDate = (timestamp: bigint) => {
-    return new Date(Number(timestamp)).toLocaleString("en-IN", {
+    return new Date(Number(timestamp) / 1_000_000).toLocaleString("en-IN", {
       day: "2-digit",
       month: "short",
       year: "numeric",
