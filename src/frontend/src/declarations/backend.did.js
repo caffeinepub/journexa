@@ -22,8 +22,8 @@ export const _CaffeineStorageRefillResult = IDL.Record({
 export const Submission = IDL.Record({
   'id' : IDL.Nat,
   'name' : IDL.Text,
-  'whatsapp' : IDL.Text,
   'timestamp' : IDL.Int,
+  'screenshotUrl' : IDL.Opt(IDL.Text),
 });
 
 export const idlService = IDL.Service({
@@ -54,7 +54,7 @@ export const idlService = IDL.Service({
     ),
   '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
   'getSubmissions' : IDL.Func([IDL.Text], [IDL.Vec(Submission)], ['query']),
-  'submitTradeReview' : IDL.Func([IDL.Text, IDL.Text], [], []),
+  'submitTradeReview' : IDL.Func([IDL.Text, IDL.Opt(IDL.Text)], [], []),
 });
 
 export const idlInitArgs = [];
@@ -74,8 +74,8 @@ export const idlFactory = ({ IDL }) => {
   const Submission = IDL.Record({
     'id' : IDL.Nat,
     'name' : IDL.Text,
-    'whatsapp' : IDL.Text,
     'timestamp' : IDL.Int,
+    'screenshotUrl' : IDL.Opt(IDL.Text),
   });
   
   return IDL.Service({
@@ -106,7 +106,7 @@ export const idlFactory = ({ IDL }) => {
       ),
     '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
     'getSubmissions' : IDL.Func([IDL.Text], [IDL.Vec(Submission)], ['query']),
-    'submitTradeReview' : IDL.Func([IDL.Text, IDL.Text], [], []),
+    'submitTradeReview' : IDL.Func([IDL.Text, IDL.Opt(IDL.Text)], [], []),
   });
 };
 

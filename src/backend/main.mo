@@ -9,6 +9,7 @@ import Storage "blob-storage/Storage";
 actor {
   include MixinStorage();
 
+  // Keep whatsapp field for stable storage compatibility with existing data
   type Submission = {
     id : Nat;
     name : Text;
@@ -19,23 +20,21 @@ actor {
   type SubmissionWithScreenshot = {
     id : Nat;
     name : Text;
-    whatsapp : Text;
     timestamp : Int;
     screenshotUrl : ?Text;
   };
 
-  // Original stable map — kept as-is for upgrade compatibility
   let submissions = Map.empty<Nat, Submission>();
-  // Separate stable map for screenshot URLs — added without breaking existing data
   let screenshotUrls = Map.empty<Nat, Text>();
   var nextId = 0;
   let adminPassword = "admin123";
 
-  public shared ({ caller }) func submitTradeReview(name : Text, whatsapp : Text, screenshotUrl : ?Text) : async () {
+  // whatsapp param removed from public API — stored as empty string internally
+  public shared ({ caller }) func submitTradeReview(name : Text, screenshotUrl : ?Text) : async () {
     let submission : Submission = {
       id = nextId;
       name;
-      whatsapp;
+      whatsapp = "";
       timestamp = Time.now();
     };
     submissions.add(nextId, submission);
@@ -52,7 +51,6 @@ actor {
         {
           id = s.id;
           name = s.name;
-          whatsapp = s.whatsapp;
           timestamp = s.timestamp;
           screenshotUrl = screenshotUrls.get(s.id);
         };

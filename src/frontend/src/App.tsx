@@ -1,9 +1,11 @@
 import type { Submission } from "@/backend";
 import { ExternalBlob } from "@/backend";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
 import {
   Table,
   TableBody,
@@ -15,13 +17,13 @@ import {
 import { useActor } from "@/hooks/useActor";
 import {
   AlertCircle,
-  BarChart2,
   CheckCircle2,
+  Clock,
   Eye,
   EyeOff,
+  Flame,
   Loader2,
   Lock,
-  Target,
   Upload,
   X,
 } from "lucide-react";
@@ -35,8 +37,6 @@ type ScreenshotOption =
   | { __kind__: "Some"; value: string }
   | { __kind__: "None" };
 
-// Helper to get screenshotUrl from a submission at runtime (field may come
-// from an updated backend before types are regenerated)
 function getScreenshotUrl(sub: Submission): ScreenshotOption {
   const s = sub as any;
   if (s.screenshotUrl && s.screenshotUrl.__kind__ === "Some") {
@@ -241,9 +241,6 @@ function AdminPage() {
                           Name
                         </TableHead>
                         <TableHead className="text-muted-foreground font-semibold">
-                          WhatsApp
-                        </TableHead>
-                        <TableHead className="text-muted-foreground font-semibold">
                           Date
                         </TableHead>
                         <TableHead className="text-muted-foreground font-semibold">
@@ -265,9 +262,6 @@ function AdminPage() {
                             </TableCell>
                             <TableCell className="text-foreground font-medium">
                               {sub.name}
-                            </TableCell>
-                            <TableCell className="text-foreground/80 font-mono text-sm">
-                              {sub.whatsapp}
                             </TableCell>
                             <TableCell className="text-muted-foreground text-sm">
                               {formatDate(sub.timestamp)}
@@ -310,7 +304,7 @@ function AdminPage() {
   );
 }
 
-// ─── Nav ─────────────────────────────────────────────────────────────────────
+// ─── Navbar ───────────────────────────────────────────────────────────────────
 
 function Navbar({ onCTAClick }: { onCTAClick: () => void }) {
   return (
@@ -326,7 +320,7 @@ function Navbar({ onCTAClick }: { onCTAClick: () => void }) {
           onClick={onCTAClick}
           className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 text-sm px-5 h-9 font-semibold"
         >
-          Get Free Trade Review
+          Find My Mistake
         </Button>
       </div>
     </nav>
@@ -342,7 +336,8 @@ function Hero({ onCTAClick }: { onCTAClick: () => void }) {
       data-ocid="hero.section"
     >
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-primary/5 blur-3xl" />
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[700px] h-[700px] rounded-full bg-primary/4 blur-3xl" />
+        <div className="absolute top-1/3 left-1/4 w-[300px] h-[300px] rounded-full bg-red-500/4 blur-3xl" />
       </div>
 
       <div className="relative z-10 max-w-3xl mx-auto px-5 text-center">
@@ -351,19 +346,21 @@ function Hero({ onCTAClick }: { onCTAClick: () => void }) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, ease: "easeOut" }}
         >
-          <div className="inline-flex items-center gap-2 mb-6 px-3 py-1.5 rounded-full border border-border bg-card text-xs text-muted-foreground">
-            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-            Currently testing with early traders
+          {/* Scarcity badge */}
+          <div className="inline-flex items-center gap-2 mb-7 px-4 py-2 rounded-full border border-red-500/40 bg-red-500/10 text-sm text-red-400 font-medium">
+            <span className="w-2 h-2 rounded-full bg-red-400 animate-pulse" />🔴
+            Only 47 review slots left today
           </div>
 
-          <h1 className="text-5xl sm:text-6xl md:text-7xl font-extrabold leading-[1.05] tracking-tight mb-6">
-            <span className="text-foreground">Stop Repeating</span>
+          <h1 className="text-5xl sm:text-6xl md:text-7xl font-extrabold leading-[1.08] tracking-tight mb-6">
+            <span className="text-foreground">You&apos;re not losing</span>
             <br />
-            <span className="text-primary">Losing Trades.</span>
+            <span className="text-primary">because of strategy.</span>
           </h1>
 
           <p className="text-muted-foreground text-lg md:text-xl max-w-xl mx-auto mb-10 leading-relaxed">
-            Send your trade screenshot. Get clear insights on what went wrong.
+            Upload your trade. We show exactly what you did wrong — in under{" "}
+            <span className="text-foreground font-semibold">60 seconds.</span>
           </p>
 
           <div className="flex flex-col items-center gap-3">
@@ -371,12 +368,12 @@ function Hero({ onCTAClick }: { onCTAClick: () => void }) {
               data-ocid="hero.primary_button"
               onClick={onCTAClick}
               size="lg"
-              className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 text-base px-8 h-12 font-semibold teal-glow-sm transition-all duration-300 hover:scale-[1.02]"
+              className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 text-base px-10 h-13 font-bold teal-glow-sm transition-all duration-300 hover:scale-[1.03]"
             >
-              Get Free Trade Review
+              Find My Mistake →
             </Button>
             <span className="text-muted-foreground text-sm">
-              Takes less than 60 seconds
+              Free. No account needed. Results in 60 seconds.
             </span>
           </div>
         </motion.div>
@@ -385,36 +382,94 @@ function Hero({ onCTAClick }: { onCTAClick: () => void }) {
   );
 }
 
-// ─── How It Works ─────────────────────────────────────────────────────────────
+// ─── Pain Amplification ───────────────────────────────────────────────────────
 
-const steps = [
-  {
-    icon: Upload,
-    number: "01",
-    title: "Upload your trade screenshot",
-    desc: "Share a screenshot of any trade — win or loss. We accept all chart formats.",
-  },
-  {
-    icon: BarChart2,
-    number: "02",
-    title: "We analyze your entry, exit, and mistakes",
-    desc: "Our review covers your setup, timing, risk management, and execution quality.",
-  },
-  {
-    icon: Target,
-    number: "03",
-    title: "Get simple insights to improve your next trade",
-    desc: "Clear, actionable feedback sent directly to you. No jargon, no fluff.",
-  },
+const painPoints = [
+  "Entered late after the move already happened",
+  "Stop loss too wide — or just random",
+  "Closed early out of fear, then watched it hit your target",
+  "Took a trade that wasn't even your setup",
 ];
 
-function HowItWorks({ onCTAClick }: { onCTAClick: () => void }) {
+function PainAmplification({ onCTAClick }: { onCTAClick: () => void }) {
   return (
-    <section
-      id="how-it-works"
-      className="py-24 px-5"
-      data-ocid="how_it_works.section"
-    >
+    <section className="py-24 px-5 bg-card/30" data-ocid="pain.section">
+      <div className="max-w-3xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-4"
+        >
+          <h2 className="text-4xl md:text-5xl font-extrabold text-foreground mb-3">
+            Sound familiar?
+          </h2>
+          <p className="text-muted-foreground text-lg">
+            If any of these hit close to home — you&apos;re in the right place.
+          </p>
+        </motion.div>
+
+        <div className="space-y-3 mt-10">
+          {painPoints.map((point, i) => (
+            <motion.div
+              key={point}
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.45, delay: i * 0.1 }}
+              data-ocid={`pain.item.${i + 1}`}
+              className="flex items-center gap-4 p-5 rounded-xl bg-card border-l-4 border-red-500 border border-border/50"
+            >
+              <span className="text-red-400 text-xl flex-shrink-0">✕</span>
+              <span className="text-foreground/90 text-base font-medium">
+                {point}
+              </span>
+            </motion.div>
+          ))}
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.5 }}
+          className="mt-10 text-center"
+        >
+          <p className="text-foreground/80 text-xl italic font-medium mb-8">
+            &ldquo;You don&apos;t need a new strategy. You need to see your
+            mistakes clearly.&rdquo;
+          </p>
+          <Button
+            data-ocid="pain.primary_button"
+            onClick={onCTAClick}
+            className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold px-8 h-12"
+          >
+            Find My Mistake
+          </Button>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+// ─── Proof Section ────────────────────────────────────────────────────────────
+
+function ProofSection({ onCTAClick }: { onCTAClick: () => void }) {
+  const reviewRows = [
+    { label: "Entry", value: "Late — FOMO after breakout", red: true },
+    { label: "Stop Loss", value: "Too wide — 3% risk", red: true },
+    {
+      label: "Exit",
+      value: "EXIT FAST ON PANIC 🔴",
+      red: true,
+      prominent: true,
+    },
+    { label: "Emotion", value: "Panic after red candle", red: true },
+  ];
+
+  return (
+    <section className="py-24 px-5" data-ocid="proof.section">
       <div className="max-w-5xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -424,56 +479,92 @@ function HowItWorks({ onCTAClick }: { onCTAClick: () => void }) {
           className="text-center mb-14"
         >
           <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
-            How It Works
+            This Is What A Real Review Looks Like
           </h2>
-          <p className="text-muted-foreground">
-            Three steps. Less than a minute of your time.
+          <p className="text-muted-foreground text-lg">
+            Raw. Specific. No sugarcoating.
           </p>
         </motion.div>
 
-        <div className="grid md:grid-cols-3 gap-5">
-          {steps.map((step, i) => (
-            <motion.div
-              key={step.number}
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: i * 0.12 }}
-              data-ocid={`how_it_works.item.${i + 1}`}
-              className="relative p-6 rounded-2xl bg-card border border-border card-glow group hover:border-primary/40 transition-all duration-300"
-            >
-              <div className="flex items-start justify-between mb-5">
-                <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20">
-                  <step.icon className="w-5 h-5 text-primary" />
+        <div className="max-w-xl mx-auto">
+          {/* Review card */}
+          <motion.div
+            initial={{ opacity: 0, x: 24 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="rounded-2xl border border-border bg-card overflow-hidden"
+          >
+            {/* Terminal header */}
+            <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-muted/50">
+              <div className="w-3 h-3 rounded-full bg-red-500/80" />
+              <div className="w-3 h-3 rounded-full bg-yellow-500/60" />
+              <div className="w-3 h-3 rounded-full bg-primary/60" />
+              <span className="text-muted-foreground text-xs font-mono ml-2">
+                journexa_review.txt
+              </span>
+            </div>
+
+            <div className="p-6 space-y-4 font-mono text-sm">
+              {reviewRows.map((row) => (
+                <div
+                  key={row.label}
+                  className="flex items-start justify-between gap-4"
+                >
+                  <span className="text-muted-foreground flex-shrink-0 w-20">
+                    {row.label}
+                  </span>
+                  <span
+                    className={`text-right font-semibold ${
+                      row.prominent
+                        ? "text-red-400 text-base bg-red-500/10 px-3 py-1 rounded-lg border border-red-500/30"
+                        : "text-red-400"
+                    }`}
+                  >
+                    {row.value}
+                  </span>
                 </div>
-                <span className="text-4xl font-black text-border leading-none">
-                  {step.number}
-                </span>
+              ))}
+
+              <div className="border-t border-border/60 pt-4 space-y-2">
+                <p className="text-primary font-semibold">
+                  📍 Pattern Detected
+                </p>
+                <p className="text-primary/90">
+                  You&apos;ve repeated this exact mistake 3 times this month.
+                </p>
               </div>
-              <h3 className="text-foreground font-semibold text-lg mb-2 leading-snug">
-                {step.title}
-              </h3>
-              <p className="text-muted-foreground text-sm leading-relaxed">
-                {step.desc}
-              </p>
-            </motion.div>
-          ))}
+            </div>
+          </motion.div>
         </div>
+
+        {/* Insight box */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className="mt-8 p-5 rounded-2xl bg-emerald-400/10 border border-emerald-400/30 text-center"
+        >
+          <p className="text-emerald-400 font-semibold text-base">
+            💡 Risk/Reward was 6.65 — but panic turned a winning trade into a
+            loss.
+          </p>
+        </motion.div>
 
         <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-          className="flex justify-center mt-10"
+          transition={{ duration: 0.4, delay: 0.4 }}
+          className="flex justify-center mt-8"
         >
           <Button
-            data-ocid="how_it_works.secondary_button"
+            data-ocid="proof.primary_button"
             onClick={onCTAClick}
-            variant="outline"
-            className="rounded-full border-border text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+            className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold px-8 h-12"
           >
-            Try it now — it&apos;s free
+            Get My Trade Reviewed
           </Button>
         </motion.div>
       </div>
@@ -481,98 +572,102 @@ function HowItWorks({ onCTAClick }: { onCTAClick: () => void }) {
   );
 }
 
-// ─── Problem ──────────────────────────────────────────────────────────────────
+// ─── Before / After ───────────────────────────────────────────────────────────
 
-const pitfalls = [
-  "No trade tracking — mistakes go unnoticed",
-  "No proper review — patterns never identified",
-  "Emotional decisions — overriding the plan",
+const beforeItems = [
+  "Random entry decisions",
+  "No pattern awareness",
+  "Same mistakes, every week",
+  "Trading on gut feel",
+];
+const afterItems = [
+  "Clear mistake identification",
+  "Pattern recognition",
+  "Improved execution",
+  "Structured trade decisions",
 ];
 
-function Problem() {
+function BeforeAfter({ onCTAClick }: { onCTAClick: () => void }) {
   return (
-    <section
-      id="problem"
-      className="py-24 px-5 bg-card/40"
-      data-ocid="problem.section"
-    >
-      <div className="max-w-5xl mx-auto">
-        <div className="grid md:grid-cols-2 gap-12 items-center">
-          <motion.div
-            initial={{ opacity: 0, x: -24 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-          >
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-5 leading-tight">
-              Most traders don&apos;t lose because of strategy
-            </h2>
-            <p className="text-muted-foreground text-lg leading-relaxed mb-8">
-              They lose because they repeat the same mistakes again and again.
-            </p>
+    <section className="py-24 px-5 bg-card/30" data-ocid="before_after.section">
+      <div className="max-w-4xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-12"
+        >
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground">
+            Trading Before vs After Journexa
+          </h2>
+        </motion.div>
 
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className="grid md:grid-cols-2 gap-0 rounded-2xl border border-border overflow-hidden"
+        >
+          {/* Before */}
+          <div className="p-8 bg-red-500/5 border-r border-border/60">
+            <h3 className="text-red-400 font-bold text-xl mb-6 flex items-center gap-2">
+              <span className="text-red-500">✕</span> Before Journexa
+            </h3>
             <ul className="space-y-4">
-              {pitfalls.map((item, i) => (
-                <motion.li
+              {beforeItems.map((item, i) => (
+                <li
                   key={item}
-                  initial={{ opacity: 0, x: -16 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.4, delay: i * 0.1 }}
-                  data-ocid={`problem.item.${i + 1}`}
-                  className="flex items-start gap-3"
+                  data-ocid={`before_after.item.${i + 1}`}
+                  className="flex items-center gap-3"
                 >
-                  <AlertCircle className="w-5 h-5 text-destructive mt-0.5 flex-shrink-0" />
-                  <span className="text-foreground/90 text-base">{item}</span>
-                </motion.li>
+                  <span className="text-red-400 font-bold text-sm flex-shrink-0">
+                    ✗
+                  </span>
+                  <span className="text-foreground/80">{item}</span>
+                </li>
               ))}
             </ul>
-          </motion.div>
+          </div>
 
-          <motion.div
-            initial={{ opacity: 0, x: 24 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.15 }}
-            className="relative"
-          >
-            <div className="rounded-2xl border border-border bg-card p-8 card-glow">
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 pb-4 border-b border-border">
-                  <div className="w-3 h-3 rounded-full bg-destructive/80" />
-                  <div className="w-3 h-3 rounded-full bg-yellow-500/60" />
-                  <div className="w-3 h-3 rounded-full bg-primary/60" />
-                  <span className="text-muted-foreground text-xs ml-2">
-                    trade_review.txt
+          {/* After */}
+          <div className="p-8 bg-emerald-400/5">
+            <h3 className="text-emerald-400 font-bold text-xl mb-6 flex items-center gap-2">
+              <span className="text-emerald-400">✓</span> After Journexa
+            </h3>
+            <ul className="space-y-4">
+              {afterItems.map((item, i) => (
+                <li
+                  key={item}
+                  data-ocid={`before_after.item.${i + 5}`}
+                  className="flex items-center gap-3"
+                >
+                  <span className="text-emerald-400 font-bold text-sm flex-shrink-0">
+                    ✓
                   </span>
-                </div>
-                {[
-                  { label: "Entry timing", status: "Late — FOMO entry" },
-                  { label: "Stop loss", status: "Too wide — 3% risk" },
-                  { label: "Exit", status: "Panic sold early" },
-                  { label: "Emotion log", status: "Fear after red candle" },
-                ].map((row) => (
-                  <div
-                    key={row.label}
-                    className="flex items-center justify-between"
-                  >
-                    <span className="text-muted-foreground text-sm">
-                      {row.label}
-                    </span>
-                    <span className="text-destructive text-sm font-medium">
-                      {row.status}
-                    </span>
-                  </div>
-                ))}
-                <div className="pt-4 border-t border-border">
-                  <p className="text-primary text-sm font-medium">
-                    → Pattern detected: 3rd repeat this month
-                  </p>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        </div>
+                  <span className="text-foreground/80">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.4, delay: 0.3 }}
+          className="flex justify-center mt-10"
+        >
+          <Button
+            data-ocid="before_after.primary_button"
+            onClick={onCTAClick}
+            className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold px-8 h-12"
+          >
+            Find My Mistake
+          </Button>
+        </motion.div>
       </div>
     </section>
   );
@@ -582,34 +677,31 @@ function Problem() {
 
 const testimonials = [
   {
-    initials: "AK",
-    name: "Arjun K.",
-    role: "Crypto trader, 14 months",
+    initials: "FT",
+    name: "Farhan T.",
+    role: "Forex trader, 2 years",
     quote:
-      "I kept making the same entry mistakes. One review made me realize I was chasing — I haven't done it since.",
-    stars: 5,
+      "I didn't realize I was entering late every time until I saw the review. It was embarrassing but helpful.",
   },
   {
-    initials: "SM",
-    name: "Sara M.",
-    role: "Forex beginner",
+    initials: "DR",
+    name: "Divya R.",
+    role: "NSE stocks, beginner",
     quote:
-      "Super clear feedback. No complicated terms, just honest notes on what I did wrong and what to fix.",
-    stars: 5,
+      "It showed me mistakes I've been repeating for months. My stop losses were basically random.",
   },
   {
-    initials: "RP",
-    name: "Ravi P.",
-    role: "Stock trader",
+    initials: "KM",
+    name: "Khalid M.",
+    role: "Crypto trader, 18 months",
     quote:
-      "I was skeptical, but the review actually caught a pattern in my exits I had completely missed.",
-    stars: 5,
+      "I knew I had discipline issues. Journexa showed me exactly when and why I break my rules.",
   },
 ];
 
-function Trust({ onCTAClick }: { onCTAClick: () => void }) {
+function Testimonials({ onCTAClick }: { onCTAClick: () => void }) {
   return (
-    <section id="trust" className="py-24 px-5" data-ocid="trust.section">
+    <section className="py-24 px-5" data-ocid="testimonials.section">
       <div className="max-w-5xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -618,15 +710,9 @@ function Trust({ onCTAClick }: { onCTAClick: () => void }) {
           transition={{ duration: 0.6 }}
           className="text-center mb-14"
         >
-          <p className="text-primary text-sm font-semibold uppercase tracking-widest mb-3">
-            Early Access
-          </p>
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
-            Trusted by Disciplined Traders
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground">
+            What Traders Are Saying
           </h2>
-          <p className="text-muted-foreground">
-            Currently testing with a small group of early users.
-          </p>
         </motion.div>
 
         <div className="grid md:grid-cols-3 gap-5">
@@ -637,17 +723,10 @@ function Trust({ onCTAClick }: { onCTAClick: () => void }) {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: i * 0.1 }}
-              data-ocid={`trust.item.${i + 1}`}
+              data-ocid={`testimonials.item.${i + 1}`}
               className="p-6 rounded-2xl bg-card border border-border card-glow"
             >
-              <div className="flex gap-0.5 mb-4">
-                {Array.from({ length: t.stars }, (_, j) => j).map((j) => (
-                  <span key={j} className="text-primary text-base">
-                    ★
-                  </span>
-                ))}
-              </div>
-              <p className="text-foreground/85 text-sm leading-relaxed mb-5">
+              <p className="text-foreground/85 text-base leading-relaxed mb-6">
                 &ldquo;{t.quote}&rdquo;
               </p>
               <div className="flex items-center gap-3">
@@ -671,16 +750,79 @@ function Trust({ onCTAClick }: { onCTAClick: () => void }) {
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.35 }}
+          transition={{ duration: 0.4, delay: 0.35 }}
           className="flex justify-center mt-10"
         >
           <Button
-            data-ocid="trust.secondary_button"
+            data-ocid="testimonials.primary_button"
             onClick={onCTAClick}
-            variant="outline"
-            className="rounded-full border-border text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+            className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold px-8 h-12"
           >
-            Join the early group
+            Get My Trade Reviewed
+          </Button>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+// ─── Urgency / Scarcity ───────────────────────────────────────────────────────
+
+function UrgencySection({ onCTAClick }: { onCTAClick: () => void }) {
+  const urgencyItems = [
+    { icon: Flame, text: "First 1,000 users get lifetime benefits" },
+    { icon: Clock, text: "Free reviews only available for a limited time" },
+    { icon: Clock, text: "Only 47 daily review slots — fills fast" },
+  ];
+
+  return (
+    <section className="py-24 px-5 bg-card/30" data-ocid="urgency.section">
+      <div className="max-w-2xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="rounded-2xl border border-red-500/30 bg-red-500/5 p-10 text-center"
+        >
+          <Badge className="mb-5 bg-red-500/20 text-red-400 border-red-500/40 hover:bg-red-500/20 text-sm px-3 py-1">
+            ⚡ Limited Early Access
+          </Badge>
+
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-8">
+            Limited Early Access
+          </h2>
+
+          <ul className="space-y-4 text-left mb-8">
+            {urgencyItems.map((item, i) => (
+              <li
+                key={item.text}
+                data-ocid={`urgency.item.${i + 1}`}
+                className="flex items-center gap-3"
+              >
+                <item.icon className="w-5 h-5 text-red-400 flex-shrink-0" />
+                <span className="text-foreground/90">{item.text}</span>
+              </li>
+            ))}
+          </ul>
+
+          <div className="mb-8">
+            <div className="flex justify-between text-sm mb-2">
+              <span className="text-muted-foreground">
+                613 of 1,000 spots claimed
+              </span>
+              <span className="text-red-400 font-semibold">387 left</span>
+            </div>
+            <Progress value={61} className="h-3 bg-muted" />
+          </div>
+
+          <Button
+            data-ocid="urgency.primary_button"
+            onClick={onCTAClick}
+            size="lg"
+            className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold px-10 h-12 teal-glow-sm transition-all duration-300 hover:scale-[1.03]"
+          >
+            Claim My Free Review
           </Button>
         </motion.div>
       </div>
@@ -703,26 +845,26 @@ function FinalCTA({ onCTAClick }: { onCTAClick: () => void }) {
         >
           <div className="absolute inset-0 bg-gradient-to-t from-primary/5 to-transparent pointer-events-none" />
           <div className="relative z-10">
-            <p className="text-primary text-sm font-semibold uppercase tracking-widest mb-4">
-              No cost. No commitment.
-            </p>
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Get your trade reviewed
+            <h2 className="text-3xl md:text-4xl font-extrabold text-foreground mb-3 leading-tight">
+              You don&apos;t need more trades.
             </h2>
-            <p className="text-muted-foreground mb-8 max-w-md mx-auto">
-              Send us your screenshot and get honest feedback on what went wrong
-              — for free.
+            <h2 className="text-3xl md:text-4xl font-extrabold text-primary mb-6 leading-tight">
+              You need to stop repeating the same one.
+            </h2>
+            <p className="text-muted-foreground mb-8 max-w-md mx-auto text-lg">
+              Get your first trade reviewed free. No account needed. Results in
+              60 seconds.
             </p>
             <Button
               data-ocid="final_cta.primary_button"
               onClick={onCTAClick}
               size="lg"
-              className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 text-base px-10 h-12 font-semibold teal-glow-sm transition-all duration-300 hover:scale-[1.02]"
+              className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 text-base px-10 h-13 font-bold teal-glow-sm transition-all duration-300 hover:scale-[1.03]"
             >
-              Start Now
+              Get Your First Review Free
             </Button>
-            <p className="text-muted-foreground text-sm mt-4">
-              Takes less than 60 seconds
+            <p className="text-red-400 text-sm mt-4 font-medium">
+              47 spots left today
             </p>
           </div>
         </motion.div>
@@ -736,20 +878,14 @@ function FinalCTA({ onCTAClick }: { onCTAClick: () => void }) {
 function CTAModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { actor } = useActor();
   const [name, setName] = useState("");
-  const [whatsapp, setWhatsapp] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [modalState, setModalState] = useState<ModalState>("idle");
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [errors, setErrors] = useState<{ name?: string; whatsapp?: string }>(
-    {},
-  );
+  const [errors, setErrors] = useState<{ name?: string }>({});
 
   const validate = () => {
-    const errs: { name?: string; whatsapp?: string } = {};
+    const errs: { name?: string } = {};
     if (!name.trim()) errs.name = "Name is required";
-    if (!whatsapp.trim()) errs.whatsapp = "WhatsApp number is required";
-    else if (!/^[\d\s+\-()]{7,20}$/.test(whatsapp.trim()))
-      errs.whatsapp = "Enter a valid phone number";
     return errs;
   };
 
@@ -780,12 +916,7 @@ function CTAModal({ open, onClose }: { open: boolean; onClose: () => void }) {
         screenshotUrl = { __kind__: "None" };
       }
 
-      // Cast to any to support updated backend API (screenshotUrl arg)
-      await (actor as any).submitTradeReview(
-        name.trim(),
-        whatsapp.trim(),
-        screenshotUrl,
-      );
+      await (actor as any).submitTradeReview(name.trim(), screenshotUrl);
       setModalState("success");
     } catch {
       setModalState("idle");
@@ -797,7 +928,6 @@ function CTAModal({ open, onClose }: { open: boolean; onClose: () => void }) {
     onClose();
     setTimeout(() => {
       setName("");
-      setWhatsapp("");
       setFile(null);
       setModalState("idle");
       setUploadProgress(0);
@@ -855,8 +985,7 @@ function CTAModal({ open, onClose }: { open: boolean; onClose: () => void }) {
                     We got it!
                   </h3>
                   <p className="text-muted-foreground text-sm leading-relaxed mb-6">
-                    We&apos;ll reach out on WhatsApp soon with your trade
-                    review.
+                    Your trade has been submitted. We&apos;ll review it shortly.
                   </p>
                   <Button
                     data-ocid="cta.confirm_button"
@@ -879,7 +1008,7 @@ function CTAModal({ open, onClose }: { open: boolean; onClose: () => void }) {
                       Get your free trade review
                     </h3>
                     <p className="text-muted-foreground text-sm">
-                      We&apos;ll analyze your trade and reach out on WhatsApp.
+                      Upload your trade screenshot and we&apos;ll review it.
                     </p>
                   </div>
 
@@ -910,32 +1039,6 @@ function CTAModal({ open, onClose }: { open: boolean; onClose: () => void }) {
                     </div>
 
                     <div className="space-y-1.5">
-                      <Label
-                        htmlFor="whatsapp"
-                        className="text-sm text-foreground/90"
-                      >
-                        WhatsApp number
-                      </Label>
-                      <Input
-                        id="whatsapp"
-                        type="tel"
-                        data-ocid="cta.input"
-                        placeholder="+91 98765 43210"
-                        value={whatsapp}
-                        onChange={(e) => setWhatsapp(e.target.value)}
-                        className="bg-muted border-border text-foreground placeholder:text-muted-foreground focus:ring-primary"
-                      />
-                      {errors.whatsapp && (
-                        <p
-                          className="text-destructive text-xs"
-                          data-ocid="cta.error_state"
-                        >
-                          {errors.whatsapp}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="space-y-1.5">
                       <Label className="text-sm text-foreground/90">
                         Trade screenshot{" "}
                         <span className="text-muted-foreground">
@@ -958,8 +1061,8 @@ function CTAModal({ open, onClose }: { open: boolean; onClose: () => void }) {
                         />
                       </label>
                       <p className="text-xs text-muted-foreground">
-                        Or just submit — you can send the screenshot later on
-                        WhatsApp
+                        Or just submit your name — you can add a screenshot
+                        later.
                       </p>
                     </div>
 
@@ -1055,9 +1158,11 @@ function LandingPage() {
       <Navbar onCTAClick={openModal} />
       <main>
         <Hero onCTAClick={openModal} />
-        <HowItWorks onCTAClick={openModal} />
-        <Problem />
-        <Trust onCTAClick={openModal} />
+        <PainAmplification onCTAClick={openModal} />
+        <ProofSection onCTAClick={openModal} />
+        <BeforeAfter onCTAClick={openModal} />
+        <Testimonials onCTAClick={openModal} />
+        <UrgencySection onCTAClick={openModal} />
         <FinalCTA onCTAClick={openModal} />
       </main>
       <Footer />

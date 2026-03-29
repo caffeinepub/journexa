@@ -13,8 +13,8 @@ import type { Principal } from '@icp-sdk/core/principal';
 export interface Submission {
   'id' : bigint,
   'name' : string,
-  'whatsapp' : string,
   'timestamp' : bigint,
+  'screenshotUrl' : [] | [string],
 }
 export interface _CaffeineStorageCreateCertificateResult {
   'method' : string,
@@ -44,7 +44,7 @@ export interface _SERVICE {
   >,
   '_caffeineStorageUpdateGatewayPrincipals' : ActorMethod<[], undefined>,
   'getSubmissions' : ActorMethod<[string], Array<Submission>>,
-  'submitTradeReview' : ActorMethod<[string, string], undefined>,
+  'submitTradeReview' : ActorMethod<[string, [] | [string]], undefined>,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];
